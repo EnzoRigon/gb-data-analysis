@@ -2,8 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-
-df = pd.read_csv('rendimentos-isentos-e-nao-tributaveis.csv', sep=';')
+df = pd.read_csv('rendimentos.csv', sep=',')
+years_salaries = df.iloc[:, 0:2]
+df = df.iloc[:, 2:].applymap(lambda x: float(x.replace('R$ ', '').replace('.', '').replace(',', '.')))
+df = pd.concat([years_salaries, df], axis=1)
 
 
 def formatar_para_reais(valor):
@@ -21,38 +23,53 @@ columns_to_display = [
 ]
 
 columns_to_display = [col for col in columns_to_display if col in df.columns]
-
 mandatory_columns = ['Ano Calendário', 'Faixa de Salários-Mínimos']
 
-st.write("Selecione a coluna que deseja visualizar:")
-selected_column = st.selectbox(
-    "Colunas disponíveis",
-    options=columns_to_display
-)
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    selected_column = st.selectbox(
+        "Selecione a coluna que deseja visualizar:",
+        options=columns_to_display
+    )
+with col2:
+    selected_year = st.selectbox(
+        "Selecione o Ano Calendário",
+        ['Todos os anos'] + list(df['Ano Calendário'].unique()) 
+    )
+
+if selected_year == 'Todos os anos':
+    df_filtered = df.copy() 
+    show_all_years = True
+else:
+    df_filtered = df[df['Ano Calendário'] == selected_year]
+    show_all_years = False
 
 if selected_column:
-    df['Ano Calendário'] = df['Ano Calendário'].astype(str)  
-
-    st.header("DataFrame e Média")    
-
+    df_filtered['Ano Calendário'] = df_filtered['Ano Calendário'].astype(str)
+    st.header("DataFrame e Média")
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        st.dataframe(df[mandatory_columns + [selected_column]].applymap(formatar_para_reais))
+        st.dataframe(df_filtered[mandatory_columns + [selected_column]].applymap(formatar_para_reais))
 
     with col2:
-        average_value = df[selected_column].mean()
-        total_sum = df[selected_column].sum()
+        average_value = df_filtered[selected_column].mean()
+        total_sum = df_filtered[selected_column].sum()
 
         st.info(f"A média dos valores é: {formatar_para_reais(average_value)}")
         st.success(f"Somatório Total: {formatar_para_reais(total_sum)}")
 
-    fig = px.line(df, x='Faixa de Salários-Mínimos', y=selected_column, title=f'Gráfico de {selected_column}',
-                    labels={selected_column: 'Reais', 'Faixa de Salários-Mínimos': 'Faixa de Salários-Mínimos'})
+    fig = px.line(df_filtered, x='Faixa de Salários-Mínimos', y=selected_column,
+                  title=f'Gráfico de {selected_column}',
+                  labels={selected_column: 'Reais', 'Faixa de Salários-Mínimos': 'Faixa de Salários-Mínimos'},
+                  color='Ano Calendário', 
+                  line_group='Ano Calendário', 
+                  hover_name='Ano Calendário' 
+                  )
 
-    # Adicionar linha de média ao gráfico
     fig.add_hline(y=average_value, line_dash="dot", line_color="red", annotation_text='Média',
-                    annotation_position="bottom right")
+                  annotation_position="bottom right")
 
     st.plotly_chart(fig)
 else:
