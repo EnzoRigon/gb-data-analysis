@@ -6,6 +6,7 @@ df = pd.read_csv('rendimentos.csv', sep=',')
 years_salaries = df.iloc[:, 0:2]
 df = df.iloc[:, 2:].applymap(lambda x: float(x.replace('R$ ', '').replace('.', '').replace(',', '.')))
 df = pd.concat([years_salaries, df], axis=1)
+df = df[df['Ano Calendário'].isin([2016, 2017, 2018, 2019, 2020])]
 
 
 def formatar_para_reais(valor):
@@ -17,7 +18,7 @@ st.title("Visualização de Dados")
 columns_to_display = [
     'Lucros e dividendos recebidos', 
     'Indenizações por rescisão de contrato de trabalho, inclusive a título de PDV, e por acidente de trabalho; e FGTS', 
-    'Ganho de capital na alienação de bem, direito ou conjunto de bens ou direitos da mesma natureza, alienados em um mesmo mês, de valor total de alienação até R$ 20.000,00, para ações alienadas no mercado de balcão, e R$ 35.000,00, nos demais casos', 
+    'Ganho de capital na alienação do único imóvel por valor igual ou inferior a R$ 440.000,00 e que, nos últimos 5 anos, não tenha efetuado nenhuma outra alienação de imóvel', 
     'Transferências patrimoniais - doações e heranças', 
     'Rendimentos de cadernetas de poupança, letras hipotecárias, letras de crédito do agronegócio e imobiliário (LCA e LCI) e certificados de recebíveis do agronegócio e imobiliários (CRA e CRI)'
 ]
